@@ -1,0 +1,60 @@
+20 epochs completed in 0.046 hours.
+Optimizer stripped from /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/runs/classify/cats_vs_dogs/run1/weights/last.pt, 3.0MB
+Optimizer stripped from /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/runs/classify/cats_vs_dogs/run1/weights/best.pt, 3.0MB
+
+Validating /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/runs/classify/cats_vs_dogs/run1/weights/best.pt...
+Ultralytics 8.4.61 🚀 Python-3.10.20 torch-2.12.0+cu130 CUDA:0 (NVIDIA RTX 4000 Ada Generation, 20017MiB)
+YOLOv8n-cls summary (fused): 30 layers, 1,437,442 parameters, 0 gradients, 3.3 GFLOPs
+train: /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/dataset/train... found 19998 images in 2 classes ✅ 
+val: /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/dataset/val... found 2500 images in 2 classes ✅ 
+test: /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/dataset/test... found 2500 images in 2 classes ✅ 
+Corrupt JPEG data: 2230 extraneous bytes before marker 0xd9
+               classes   top1_acc   top5_acc: 78% ━━━━━━━━━─── 31/40 81.2it/s 0.2s<0.1sCorrupt JPEG data: 2230 extraneous bytes before marker 0xd9
+               classes   top1_acc   top5_acc: 100% ━━━━━━━━━━━━ 40/40 161.7it/s 0.2s
+                   all       0.99          1
+Speed: 0.0ms preprocess, 0.1ms inference, 0.0ms loss, 0.0ms postprocess per image
+Results saved to /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/runs/classify/cats_vs_dogs/run1
+
+Evaluating model...
+Ultralytics 8.4.61 🚀 Python-3.10.20 torch-2.12.0+cu130 CUDA:0 (NVIDIA RTX 4000 Ada Generation, 20017MiB)
+YOLOv8n-cls summary (fused): 30 layers, 1,437,442 parameters, 0 gradients, 3.3 GFLOPs
+train: /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/dataset/train... found 19998 images in 2 classes ✅ 
+val: /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/dataset/val... found 2500 images in 2 classes ✅ 
+test: /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/dataset/test... found 2500 images in 2 classes ✅ 
+val: Fast image access ✅ (ping: 0.0±0.0 ms, read: 3498.3±1816.6 MB/s, size: 37.3 KB)
+val: Scanning /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/dataset/val... 2497 images, 3 corrupt: 100% ━━━━━━━━━━━━ 2497/2497 748.1Mit/s 0.0s
+val: /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/dataset/val/cat/11935.jpg: ignoring corrupt image/label: Invalid image format GIF. Supported formats are:
+images: {'dng', 'jpg', 'webp', 'png', 'mpo', 'heic', 'heif', 'jpeg2000', 'jpeg', 'tiff', 'avif', 'tif', 'jp2', 'bmp'}
+videos: {'webm', 'wmv', 'm4v', 'mov', 'gif', 'avi', 'asf', 'mp4', 'mpeg', 'mpg', 'ts', 'mkv'}
+val: /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/dataset/val/cat/2663.jpg: ignoring corrupt image/label: Invalid image format GIF. Supported formats are:
+images: {'dng', 'jpg', 'webp', 'png', 'mpo', 'heic', 'heif', 'jpeg2000', 'jpeg', 'tiff', 'avif', 'tif', 'jp2', 'bmp'}
+videos: {'webm', 'wmv', 'm4v', 'mov', 'gif', 'avi', 'asf', 'mp4', 'mpeg', 'mpg', 'ts', 'mkv'}
+val: /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/dataset/val/dog/6718.jpg: ignoring corrupt image/label: Invalid image format GIF. Supported formats are:
+images: {'dng', 'jpg', 'webp', 'png', 'mpo', 'heic', 'heif', 'jpeg2000', 'jpeg', 'tiff', 'avif', 'tif', 'jp2', 'bmp'}
+videos: {'webm', 'wmv', 'm4v', 'mov', 'gif', 'avi', 'asf', 'mp4', 'mpeg', 'mpg', 'ts', 'mkv'}
+               classes   top1_acc   top5_acc: 81% ━━━━━━━━━╸── 127/157 245.8it/s 0.5s<0.1sCorrupt JPEG data: 2230 extraneous bytes before marker 0xd9
+Corrupt JPEG data: 2230 extraneous bytes before marker 0xd9
+               classes   top1_acc   top5_acc: 100% ━━━━━━━━━━━━ 157/157 242.9it/s 0.6s
+                   all       0.99          1
+Speed: 0.0ms preprocess, 0.1ms inference, 0.0ms loss, 0.0ms postprocess per image
+Results saved to /mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/runs/classify/val
+ultralytics.utils.metrics.ClassifyMetrics object with attributes:
+
+confusion_matrix: <ultralytics.utils.metrics.ConfusionMatrix object at 0x76d3aae94fa0>
+curves: []
+curves_results: []
+fitness: 0.9949939846992493
+keys: ['metrics/accuracy_top1', 'metrics/accuracy_top5']
+results_dict: {'metrics/accuracy_top1': 0.9899879693984985, 'metrics/accuracy_top5': 1.0, 'fitness': 0.9949939846992493}
+save_dir: PosixPath('/mnt/2tb-samsung/zychin/HCJC2026/dogsvscats_YOLOv8/dogsvscats/runs/classify/val')
+speed: {'preprocess': 0.03803323147758583, 'inference': 0.1444396992412238, 'loss': 0.00030363956091009476, 'postprocess': 0.0004429711654088932}
+top1: 0.9899879693984985
+top5: 1.0
+Corrupt JPEG data: 128 extraneous bytes before marker 0xd9
+Corrupt JPEG data: 396 extraneous bytes before marker 0xd9
+Warning: unknown JFIF revision number 0.00
+Corrupt JPEG data: 65 extraneous bytes before marker 0xd9
+
+===================================
+Test Accuracy: 98.92%
+===================================
