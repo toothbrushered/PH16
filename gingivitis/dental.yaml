@@ -1,0 +1,7 @@
+path: /mnt/2tb-samsung/zychin/HCJC2026/Gingivitis_Dataset
+train: images/train
+val: images/val
+test: images/test
+
+nc: 7
+names: ['upper_jaw', 'lower_jaw', 'healthy', 'gingivitis_1', 'gingivitis_2', 'gingivitis_3', 'gingivitis_4']
