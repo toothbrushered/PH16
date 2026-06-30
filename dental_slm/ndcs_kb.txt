@@ -1,0 +1,561 @@
+################################################################################
+# NDCS DENTAL SCREENING AI — KNOWLEDGE BASE (ndcs_kb.txt)
+# Version: 1.0
+# Sources:
+#   - Malocclusion: OMNI Dataset (Xue et al., 2025, arXiv:2505.15637)
+#   - Gingivitis: Mendeley Dental Intraoral Image Dataset (Hoang Bao Duy, 2024)
+#     DOI: 10.17632/3253gj88rr.1
+# Purpose: Guidelines for SLM to generate pre-filled referral notes
+#          from intraoral image detections.
+################################################################################
+
+
+================================================================================
+SECTION 1: LABEL TAXONOMY
+================================================================================
+
+------------------------------------------------------------------------
+1A. MALOCCLUSION LABELS (OMNI Dataset — 10 classes)
+Source: arXiv:2505.15637, Table I
+------------------------------------------------------------------------
+
+Labels are split into three groups:
+
+--- GROUP A: CONDITION LABELS (Actual malocclusion disorders) ---
+
+  TT   | Tooth Torsion
+         Definition: A tooth rotated or twisted around its longitudinal axis,
+         resulting in abnormal orientation within the dental arch.
+         Prevalence: Most common disorder in dataset (1,686 cases).
+         Visible in views: Frontal, left occlusal, right occlusal,
+                           maxillary, mandibular.
+         Severity: Mild (single tooth) → Severe (multiple teeth, arch
+                   distortion). Severity inferred from bounding box count
+                   and distribution across jaw regions.
+
+  DO   | Deep Overjet
+         Definition: Upper front teeth (maxillary incisors) horizontally
+         overlap the lower front teeth (mandibular incisors) to an
+         excessive degree.
+         Prevalence: 205 cases.
+         Visible in views: Frontal, left occlusal, right occlusal.
+         Jaw involvement: Always involves both maxilla and mandible.
+         Severity: Measured by degree of horizontal overlap.
+                   >3 mm = notable; >6 mm = severe overjet.
+
+  TM   | Tooth Misalignment
+         Definition: Improper positioning of teeth within the dental arch.
+         Includes crowding, spacing, and deviations from ideal arch form.
+         Prevalence: 147 cases.
+         Visible in views: All five views depending on affected region.
+         Severity: Mild (minor spacing/rotation) → Severe (crowding
+                   affecting multiple segments, arch collapse).
+
+  MR   | Mandibular Retrusion
+         Definition: Skeletal condition — posterior positioning of the
+         mandible relative to the maxilla. Contributes to Angle Class II
+         malocclusion.
+         Prevalence: 289 cases.
+         Visible in views: Frontal, left occlusal, right occlusal.
+         Jaw involvement: Mandible (lower jaw) retruded relative to maxilla.
+         Severity: Class II div 1 (proclined upper incisors) or div 2
+                   (retroclined). Skeletal — requires cephalometric
+                   confirmation.
+
+--- GROUP B: TREATMENT / APPLIANCE LABELS (Devices on teeth) ---
+
+  IOA  | Invisible Orthodontic Attachment
+         Definition: Tooth-coloured or transparent devices bonded to teeth
+         as part of clear aligner / aesthetic orthodontic treatment.
+         Purpose: Aid controlled tooth movement without traditional brace
+                  visibility.
+         Clinical note: Patient is UNDER active orthodontic treatment.
+                        Do not flag as new disorder. Note for referral
+                        as "ongoing treatment — clear aligner."
+
+  CFOA | Cast Fixed Orthodontic Appliances
+         Definition: Custom-made orthodontic devices (e.g., fixed space
+         maintainers, lingual braces) fabricated from dental impressions
+         and permanently attached to teeth.
+         Prevalence: Least common appliance in dataset (144 cases).
+         Clinical note: Patient is UNDER active orthodontic treatment.
+                        Note for referral as "ongoing treatment — cast
+                        fixed appliance."
+
+  OB   | Orthodontic Brace
+         Definition: Comprehensive appliance with brackets, wires, and
+         bands fixed to teeth. Applies continuous pressure for tooth
+         movement.
+         Prevalence: 220 cases.
+         Clinical note: Patient is UNDER active orthodontic treatment.
+                        Note for referral as "ongoing treatment —
+                        conventional braces."
+
+  FOD  | Fixed Orthodontic Device
+         Definition: Any orthodontic apparatus bonded to the teeth that
+         remains throughout the treatment period. Includes traditional
+         braces and certain retainers. Corrects dental and skeletal
+         discrepancies via controlled forces over time.
+         Prevalence: 776 cases (most common appliance class).
+         Clinical note: Patient is UNDER active orthodontic treatment.
+                        Note for referral as "ongoing treatment —
+                        fixed orthodontic device."
+
+--- GROUP C: NORMAL / DEVELOPMENTAL (Not a disorder) ---
+
+  HT   | Healthy Teeth
+         Definition: Teeth properly aligned and functioning within the
+         dental arch. No signs of decay, periodontal disease, or
+         structural damage.
+         Prevalence: 3,610 cases (largest class).
+         SLM action: No malocclusion referral required. Check gingivitis
+                     score before finalising note.
+
+  TE   | Tooth Emergence
+         Definition: Natural process by which a tooth moves through
+         alveolar bone and soft tissue to appear in the oral cavity.
+         A normal phase of dental development — NOT a disorder.
+         Prevalence: 441 cases.
+         SLM action: No malocclusion referral required. Flag as
+                     "developmental — tooth emergence in progress."
+                     Advise routine monitoring.
+
+
+------------------------------------------------------------------------
+1B. GINGIVITIS LABELS (Mendeley Dataset — MGI-based scoring)
+Source: DOI 10.17632/3253gj88rr.1
+Scoring system: Modified Gingival Index (MGI)
+------------------------------------------------------------------------
+
+--- LOCATION LABELS (jaw region) ---
+
+  Label 0 | Maxilla  — Upper jaw region (upper gum tissue)
+  Label 1 | Mandible — Lower jaw region (lower gum tissue)
+
+--- SEVERITY LABELS (MGI Score) ---
+
+  Label 2 | MGI Score 0 — HEALTHY
+              No inflammation. Gingiva firm, pink, stippled.
+              No bleeding on probing.
+              Action: No gingivitis referral needed.
+
+  Label 3 | MGI Score 1 — MILD INFLAMMATION (Localised)
+              Slight colour change, mild oedema. Localised to
+              specific gingival units. No bleeding on probing.
+              Action: Advise improved oral hygiene. Routine review.
+
+  Label 4 | MGI Score 2 — MILD INFLAMMATION (Generalised)
+              Mild inflammation involving the ENTIRE gum tissue
+              (generalised). Redness, slight oedema throughout
+              the arch. May have bleeding on probing.
+              Action: Oral hygiene instruction + early dental review.
+
+  Label 5 | MGI Score 3 — MODERATE INFLAMMATION
+              Obvious redness, oedema, glazing, and spontaneous
+              bleeding. Gingival enlargement may be present.
+              Involves multiple teeth or the full arch.
+              Action: Dental referral within 2–4 weeks.
+                      Scaling and polishing likely required.
+
+  Label 6 | MGI Score 4 — SEVERE INFLAMMATION
+              Marked redness, oedema, spontaneous bleeding,
+              ulceration. Associated with significant discomfort.
+              Risk of progression to periodontitis.
+              Action: URGENT dental referral. Same-day or within
+                      48–72 hours.
+
+
+================================================================================
+SECTION 2: MOUTH REGION MAPPING
+================================================================================
+
+The model outputs bounding boxes per tooth. Map detected labels to
+standardised mouth regions for the referral note.
+
+------------------------------------------------------------------------
+2A. Jaw Regions (Gingivitis model)
+------------------------------------------------------------------------
+  Maxilla (upper arch):
+    - Anterior region:   Upper incisors + canines (teeth 11–13, 21–23)
+    - Premolar region:   Upper premolars (teeth 14–15, 24–25)
+    - Molar region:      Upper molars (teeth 16–17, 26–27)
+
+  Mandible (lower arch):
+    - Anterior region:   Lower incisors + canines (teeth 31–33, 41–43)
+    - Premolar region:   Lower premolars (teeth 34–35, 44–45)
+    - Molar region:      Lower molars (teeth 36–37, 46–47)
+
+NOTE: The gingivitis model outputs a SINGLE MGI score per image.
+      In the referral report, detail per-jaw findings:
+        - Maxilla MGI score (from Label 0 detections)
+        - Mandible MGI score (from Label 1 detections)
+        - Overall MGI score = max(maxilla_score, mandible_score)
+          unless clinical context indicates otherwise.
+
+------------------------------------------------------------------------
+2B. Malocclusion Region Mapping (per detected bounding box)
+------------------------------------------------------------------------
+
+  TT  — Report by jaw quadrant and tooth position where rotation detected.
+        E.g., "Upper left canine (23) — tooth torsion detected."
+
+  DO  — Always involves the anterior region of both jaws.
+        Report: "Anterior maxilla and mandible — deep overjet noted."
+
+  TM  — Report specific arch segment(s) affected (anterior, premolar,
+        molar) and jaw (maxilla/mandible).
+        E.g., "Lower anterior segment — crowding / spacing / deviation."
+
+  MR  — Skeletal finding. Report as whole-jaw finding.
+        "Mandibular retrusion — Class II skeletal relationship suggested.
+         Cephalometric assessment recommended."
+
+  IOA/CFOA/OB/FOD — Note as appliance present. Do not localise
+        further unless co-detection with condition label exists.
+
+  HT  — No region-specific finding needed.
+
+  TE  — Report by jaw and approximate tooth position if bounding box
+        available. E.g., "Lower left quadrant — tooth emergence
+        (developmental, age-appropriate)."
+
+
+================================================================================
+SECTION 3: REFERRAL CRITERIA
+================================================================================
+
+------------------------------------------------------------------------
+3A. Malocclusion Referral Criteria
+------------------------------------------------------------------------
+
+  REFER TO ORTHODONTIST — Required:
+
+    TT (Tooth Torsion):
+      - Single tooth: Refer for monitoring / interceptive treatment.
+      - Multiple teeth (≥3) or severe rotation (>45°): Refer urgently
+        for orthodontic assessment.
+      - Co-detected with IOA/OB/FOD: Patient likely already under care.
+        Note and forward to treating orthodontist.
+
+    DO (Deep Overjet):
+      - Any detected Deep Overjet: Refer to orthodontist.
+      - Overjet estimated severe (prominent upper incisor protrusion):
+        Refer urgently. Risk of trauma to upper incisors.
+
+    TM (Tooth Misalignment):
+      - Mild spacing / minor deviation: Refer for monitoring.
+      - Crowding or arch form deviation: Refer for orthodontic
+        assessment and treatment planning.
+
+    MR (Mandibular Retrusion):
+      - Always refer to orthodontist ± oral and maxillofacial surgeon
+        (OMFS) depending on severity.
+      - If growing patient (<18 yrs): Refer early for functional
+        appliance assessment.
+      - If adult and severe: Possible surgical correction — joint
+        orthodontic-surgical referral.
+
+  MONITOR / ROUTINE REVIEW — No immediate referral:
+
+    HT: No malocclusion. Routine dental review.
+
+    TE: No referral. Advise family that tooth emergence is normal.
+        Monitor at next dental visit.
+
+  DOCUMENT EXISTING TREATMENT — No new referral:
+
+    IOA / CFOA / OB / FOD:
+      - Patient is under active orthodontic treatment.
+      - If co-detected with untreated condition label (TT, DO, TM, MR):
+        Inform treating orthodontist.
+      - Otherwise: No new referral. Document appliance presence.
+
+------------------------------------------------------------------------
+3B. Gingivitis Referral Criteria (based on overall MGI score)
+------------------------------------------------------------------------
+
+  MGI 0 (Healthy):
+    Action:   No referral needed.
+    Advice:   Continue good oral hygiene. Routine 6-monthly dental visit.
+
+  MGI 1 (Mild, localised):
+    Action:   No immediate referral.
+    Advice:   Oral hygiene instruction (OHI) — brushing technique,
+              flossing. Review at next routine dental appointment.
+
+  MGI 2 (Mild, generalised):
+    Action:   Dental review within 4–6 weeks.
+    Advice:   OHI + recommend appointment for professional cleaning
+              (scaling and polishing).
+
+  MGI 3 (Moderate):
+    Action:   REFER — Dental appointment within 2–4 weeks.
+    Reason:   Generalised inflammation with bleeding; risk of
+              periodontal progression if untreated.
+    Advice:   Reinforce OHI. Avoid smoking/tobacco. Scaling and
+              root surface debridement likely.
+
+  MGI 4 (Severe):
+    Action:   URGENT REFERRAL — Within 24–72 hours.
+    Reason:   Severe gingival inflammation with spontaneous bleeding
+              and/or ulceration. High risk of periodontitis.
+    Advice:   Urgent scaling. Possible systemic factors (pregnancy,
+              diabetes, immunosuppression) should be explored.
+
+------------------------------------------------------------------------
+3C. Combined Referral Logic (Malocclusion + Gingivitis Co-detection)
+------------------------------------------------------------------------
+
+  If malocclusion (TT, DO, TM, or MR) is detected AND MGI ≥ 3:
+    → Refer to BOTH:
+        1. Orthodontist (malocclusion management)
+        2. General dentist / periodontist (gingivitis management)
+    → Note: Gingivitis should ideally be resolved BEFORE orthodontic
+      appliance placement.
+
+  If appliance detected (IOA/OB/FOD/CFOA) AND MGI ≥ 2:
+    → Alert treating orthodontist to gingivitis status.
+    → Recommend adjunctive periodontal review before next appliance
+      adjustment.
+
+  If HT + MGI 0:
+    → No referral required.
+    → Routine dental visit advised.
+
+
+================================================================================
+SECTION 4: SLM OUTPUT FORMAT — PRE-FILLED REFERRAL NOTE TEMPLATE
+================================================================================
+
+------------------------------------------------------------------------
+4A. Template Structure
+------------------------------------------------------------------------
+
+The SLM should generate one referral note per screening session.
+Populate all detected findings. Leave blank fields where model
+returns no detection.
+
+---BEGIN REFERRAL NOTE TEMPLATE---
+
+NDCS DENTAL SCREENING — AI-ASSISTED REFERRAL NOTE
+--------------------------------------------------
+Date of Screening : [AUTO: YYYY-MM-DD]
+Screening ID      : [AUTO: unique session ID]
+Patient Age Group : [FIELD: child / adolescent / adult]
+                    (Inferred from TE detection or operator input)
+
+--- MALOCCLUSION FINDINGS ---
+Model Used        : OMNI-based Malocclusion Detector
+Image Views       : [List detected views: frontal / left / right /
+                     maxillary / mandibular]
+
+Detected Conditions:
+  [ ] TT — Tooth Torsion
+        Location: [FIELD: jaw quadrant(s) and tooth position(s)]
+        Severity: [FIELD: single tooth / multiple teeth / severe rotation]
+
+  [ ] DO — Deep Overjet
+        Location: Anterior region (maxilla + mandible)
+        Severity: [FIELD: moderate / severe]
+
+  [ ] TM — Tooth Misalignment
+        Location: [FIELD: jaw region(s) and segment(s)]
+        Type: [FIELD: crowding / spacing / arch deviation]
+
+  [ ] MR — Mandibular Retrusion
+        Location: Whole mandible (skeletal)
+        Notes: Class II relationship suspected. Cephalometric
+               assessment recommended.
+
+Appliances Detected (existing treatment — no new referral unless noted):
+  [ ] IOA  — Clear aligner attachment present
+  [ ] CFOA — Cast fixed appliance present
+  [ ] OB   — Orthodontic brace present
+  [ ] FOD  — Fixed orthodontic device present
+
+Developmental / Normal Findings:
+  [ ] HT   — Healthy teeth, no malocclusion
+  [ ] TE   — Tooth emergence (normal development)
+        Location: [FIELD: jaw / quadrant]
+
+Malocclusion Referral Required:
+  [ ] Yes — Refer to: [FIELD: Orthodontist / OMFS / Treating orthodontist]
+            Urgency: [FIELD: Routine / Within 4 weeks / Urgent]
+  [ ] No
+
+--- GINGIVITIS FINDINGS ---
+Model Used        : MGI-based Gingivitis Detector
+
+Jaw-Level MGI Scores:
+  Maxilla  (upper jaw): MGI Score [FIELD: 0–4]
+    Region breakdown:
+      Anterior  : [FIELD: healthy / mild / moderate / severe]
+      Premolar  : [FIELD: healthy / mild / moderate / severe]
+      Molar     : [FIELD: healthy / mild / moderate / severe]
+
+  Mandible (lower jaw): MGI Score [FIELD: 0–4]
+    Region breakdown:
+      Anterior  : [FIELD: healthy / mild / moderate / severe]
+      Premolar  : [FIELD: healthy / mild / moderate / severe]
+      Molar     : [FIELD: healthy / mild / moderate / severe]
+ (1 sentence, single clear action)
+Overall MGI Score (worst observed): [FIELD: 0–4]
+  Interpretation:
+    0 → Healthy gingiva
+    1 → Mild localised inflammation
+    2 → Mild generalised inflammation
+    3 → Moderate inflammation
+    4 → Severe inflammation
+
+Gingivitis Referral Required:
+  [ ] No referral (MGI 0–1)
+  [ ] Routine dental review within 4–6 weeks (MGI 2)
+  [ ] Refer within 2–4 weeks — scaling indicated (MGI 3)
+  [ ] URGENT referral within 24–72 hours (MGI 4)
+
+Oral Hygiene Instructions Provided: [ ] Yes  [ ] No
+
+--- COMBINED CLINICAL SUMMARY ---
+[AUTO-GENERATED by SLM — 2–3 sentences summarising all findings,
+ referral urgency, and any interactions between malocclusion and
+ gingivitis findings.]
+
+Example (SLM to populate with actual values):
+  "Screening detected tooth torsion in the upper left quadrant
+   and moderate gingivitis (MGI 3) involving the full mandibular
+   arch. Referral to an orthodontist and general dentist is
+   recommended. Periodontal status should be stabilised prior to
+   orthodontic appliance placement."
+
+Reviewed by (operator / clinician): ______________________________
+Signature: ___________________________  Date: ____________________
+
+This note is AI-assisted and must be reviewed and countersigned
+by a qualified dental professional before use in clinical care.
+---END REFERRAL NOTE TEMPLATE---
+
+
+================================================================================
+SECTION 5: SLM DECISION RULES (PSEUDOCODE)
+================================================================================
+
+These rules govern how the SLM generates the referral note from
+model detections. All labels refer to Section 1 taxonomy.
+
+------------------------------------------------------------------------
+5A. Malocclusion Decision Rules
+------------------------------------------------------------------------
+
+INPUT:  List of detected malocclusion labels per image
+        (may be multi-label; 0–3 per image per OMNI dataset)
+
+RULE M1 — Classify each label into group:
+  IF label IN [TT, DO, TM, MR]   → GROUP A (condition)
+  IF label IN [IOA, CFOA, OB, FOD] → GROUP B (appliance)
+  IF label IN [HT, TE]           → GROUP C (normal/developmen (1 sentence, single clear action)tal)
+
+RULE M2 — Determine referral need:
+  IF any GROUP A label detected:
+    SET malocclusion_referral = TRUE
+    SET referral_type = "Orthodontist"
+    IF MR detected AND patient is adult: ADD referral_type += "OMFS"
+    IF TT count ≥ 3 OR DO detected: SET urgency = "Within 4 weeks"
+    ELSE: SET urgency = "Routine"
+  ELSE IF GROUP B detected AND GROUP A also detected:
+    SET malocclusion_referral = TRUE
+    SET referral_type = "Notify treating orthodontist"
+    SET urgency = "Routine"
+  ELSE:
+    SET malocclusion_referral = FALSE (1 sentence, single clear action)
+
+RULE M3 — Developmental note:
+  IF TE detected: ADD note = "Tooth emergence — normal development.
+                              Monitor at next dental visit."
+
+------------------------------------------------------------------------
+5B. Gingivitis Decision Rules
+------------------------------------------------------------------------
+
+INPUT:  Per-jaw MGI scores (maxilla_mgi, mandible_mgi) from model
+        NOTE: Model outputs single MGI score per image.
+              Use jaw-level labels (0=maxilla, 1=mandible) to
+              attribute scores to each jaw region.
+
+RULE G1 — Compute overall score:
+  overall_mgi = MAX(maxilla_mgi, mandible_mgi)
+
+RULE G2 — Determine referral:
+  IF overall_mgi == 0: SET gingivitis_referral = "None"
+  IF overall_mgi == 1: SET gingivitis_referral = "Oral Hygiene Information Only"
+  IF overall_mgi == 2: SET gingivitis_referral = "Routine review 4–6 weeks"
+  IF overall_mgi == 3: SET gingivitis_referral = "Refer within 2–4 weeks"
+  IF overall_mgi == 4: SET gingivitis_referral = "URGENT — within 72 hours"
+
+------------------------------------------------------------------------
+5C. Combined Logic
+------------------------------------------------------------------------
+
+RULE C1 — Combined referral conflict check:
+  IF malocclusion_referral == TRUE AND overall_mgi >= 3:
+    ADD clinical_note = "Gingivitis should be treated before
+                         orthodontic appliance placement."
+    SET dual_referral = TRUE
+
+RULE C2 — Appliance + active gingivitis:
+  IF GROUP B detected AND overall_mgi >= 2:
+    ADD alert = "Gingivitis detected in patient with existing
+                 orthodontic appliance. Notify treating orthodontist."
+
+RULE C3 — Generate summary sentence:
+  COMPOSE 2–3 sentence summary using:
+    - Detected condition labels + locations
+    - Overall MGI score + affected jaws
+    - Referral type and urgency
+    - Any dual-referral or appliance alert notes
+
+
+================================================================================
+SECTION 6: QUICK REFERENCE TABLES
+================================================================================
+
+------------------------------------------------------------------------
+Table A: Malocclusion Class Summary
+------------------------------------------------------------------------
+Code  | Full Name                   | Group      | Refer?        | Urgency
+------+-----------------------------+------------+---------------+----------
+HT    | Healthy Teeth               | Normal     | No            | —
+TT    | Tooth Torsion               | Condition  | Yes           | Routine–4wk
+DO    | Deep Overjet                | Condition  | Yes           | Within 4wk
+TM    | Tooth Misalignment          | Condition  | Yes           | Routine
+MR    | Mandibular Retrusion        | Condition  | Yes (Ortho±OMFS)| Routine–Urgent
+IOA   | Invis. Orthodontic Attach.  | Appliance  | Document only | —
+CFOA  | Cast Fixed Ortho. Appl.     | Appliance  | Document only | —
+OB    | Orthodontic Brace           | Appliance  | Document only | —
+FOD   | Fixed Orthodontic Device    | Appliance  | Document only | —
+TE    | Tooth Emergence             | Normal/Dev | No            | Monitor
+
+------------------------------------------------------------------------
+Table B: Gingivitis MGI Score Summary
+------------------------------------------------------------------------
+Label | MGI Score | Severity              | Action
+------+-----------+-----------------------+-------------------------------
+2     | 0         | Healthy               | No action
+3     | 1         | Mild (localised)      | OHI, routine review
+4     | 2         | Mild (generalised)    | Dental review 4–6 weeks
+5     | 3         | Moderate              | Refer within 2–4 weeks
+6     | 4         | Severe                | URGENT within 24–72 hours
+
+------------------------------------------------------------------------
+Table C: Location Labels (Gingivitis model)
+------------------------------------------------------------------------
+Label | Region   | Sub-regions
+------+----------+-------------------------------------------
+0     | Maxilla  | Upper anterior, upper premolar, upper molar
+1     | Mandible | Lower anterior, lower premolar, lower molar
+
+
+================================================================================
+END OF NDCS_KB.TXT
+Version 1.0 | Compiled for NDCS Dental Screening SLM
+Sources: arXiv:2505.15637 (OMNI) | DOI:10.17632/3253gj88rr.1 (Gingivitis)
+================================================================================
