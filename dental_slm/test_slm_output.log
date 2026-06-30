@@ -1,0 +1,69 @@
+/mnt/2tb-samsung/zychin/HCJC2026/dental_slm/test_slm.py:4: DeprecationWarning: `langchain-community` is being sunset and is no longer actively maintained. See https://github.com/langchain-ai/langchain-community/issues/674 for details and migration guidance toward standalone integration packages.
+  from langchain_community.vectorstores import Chroma
+/mnt/2tb-samsung/zychin/HCJC2026/dental_slm/test_slm.py:8: LangChainDeprecationWarning: The class `HuggingFaceEmbeddings` was deprecated in LangChain 0.2.2 and will be removed in 1.0. An updated version of the class exists in the `langchain-huggingface package and should be used instead. To use it run `pip install -U `langchain-huggingface` and import as `from `langchain_huggingface import HuggingFaceEmbeddings``.
+  embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 11512.07it/s]
+/mnt/2tb-samsung/zychin/HCJC2026/dental_slm/test_slm.py:9: LangChainDeprecationWarning: The class `Chroma` was deprecated in LangChain 0.2.9 and will be removed in 1.0. An updated version of the class exists in the `langchain-chroma package and should be used instead. To use it run `pip install -U `langchain-chroma` and import as `from `langchain_chroma import Chroma``.
+  db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
+Generating clinical summary...
+
+============================================================
+NDCS DENTAL SCREENING — AI-ASSISTED REFERRAL NOTE
+--------------------------------------------------
+Date of Screening : 2026-06-30
+Screening ID      : 8DD5BC0C
+Triage Priority   : YELLOW
+Patient Age Group : child
+
+--- MALOCCLUSION FINDINGS ---
+Model Used   : OMNI-based Malocclusion Detector
+Image Views  : frontal, maxillary
+
+Detected Conditions:
+  [ ] TT — Tooth Torsion
+  [ ] DO — Deep Overjet
+  [X] TM — Tooth Misalignment
+        Location : [FIELD: jaw region(s) and segment(s)]
+        Type     : [FIELD: crowding / spacing / arch deviation]
+  [ ] MR — Mandibular Retrusion
+
+Appliances Detected:
+  [ ] IOA — Clear aligner attachment
+  [ ] CFOA — Cast fixed appliance
+  [ ] OB — Orthodontic brace
+  [ ] FOD — Fixed orthodontic device
+
+Developmental / Normal Findings:
+  [ ] HT — Healthy teeth, no malocclusion
+  [ ] TE — Tooth emergence (normal development)
+
+Malocclusion Referral Required : Yes
+  Refer to : Orthodontist
+  Urgency  : Within 4 weeks
+
+--- GINGIVITIS FINDINGS ---
+Model Used : MGI-based Gingivitis Detector
+
+  Maxilla (upper jaw): MGI Score 1 — Mild localised inflammation
+    Anterior  : mild
+    Premolar  : healthy
+    Molar     : healthy
+  Mandible (lower jaw): MGI Score 0 — Healthy gingiva
+    Anterior  : healthy
+    Premolar  : healthy
+    Molar     : healthy
+
+Overall MGI Score (worst observed) : 1 — Mild localised inflammation
+Gingivitis Referral                : No referral (MGI 0–1) — OHI advised
+Oral Hygiene Instructions Provided : Yes
+
+--- COMBINED CLINICAL SUMMARY ---
+The patient presents with mild localized gingival inflammation and moderate malocclusion due to misaligned teeth, as evidenced by the Tooth Misalignment finding and respective MGI scores of one for both maxilla and mandible. There's no generalized gum disease indicated since overall MGI is only mildly affected with a score of 1. A referral to an orthodontist has been advised within four weeks, while oral hygiene instruction was recommended due to the absence of generalised gingivitis inflammation warranting no further immediate dental review for periodontal issues.
+
+Reviewed by (operator / clinician): _____________________________
+Signature: __________________________  Date: ____________________
+
+This note is AI-assisted and must be reviewed and countersigned
+by a qualified dental professional before use in clinical care.
+============================================================
