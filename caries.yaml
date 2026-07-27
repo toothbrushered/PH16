@@ -1,0 +1,7 @@
+path: /mnt/2tb-samsung/zychin/HCJC2026/Caries_Dataset/Benchmarking_Dataset
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 2
+names: ['caries_permanent', 'caries_primary']
