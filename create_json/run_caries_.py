@@ -18,7 +18,7 @@ for item in results:
     for box in item.boxes:
         cls_idx = int(box.cls.item())
         label = item.names[cls_idx]
-        tooth_type = TOOTH_TYPE[label]
+        tooth_type = TOOTH_TYPE[label].get()
         teeth.append({"type": tooth_type, "caries": True})
 
 output = {"teeth": teeth}
