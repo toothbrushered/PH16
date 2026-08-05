@@ -3,43 +3,26 @@ import uuid
 from datetime import date
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
-
+import json
+import os
 # ── DB setup ────────────────────────────────────────────────────────────────
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
 
-# ── Detection inputs (PLEASE REPLACE WITH MODEL OUTPUTS!!!!!) ──────────────────────
-priority          = "YELLOW"
-patient_age_group = "child"
+with open("/mnt/2tb-samsung/zychin/HCJC2026/create_json_files/outputs/malocclusion_output.json") as f:
+    maloc = json.load(f)
+detected_labels = maloc["detected_labels"]
 
-# --- Malocclusion (from OMNI model) ---
-detected_labels = ["TM"]                        # labels detected by OMNI model
-image_views     = ["frontal", "maxillary"]      # views used
+with open("/mnt/2tb-samsung/zychin/HCJC2026/create_json_files/outputs/gingivitis_output.json") as f:
+    gingi = json.load(f)
+mgi_scores = gingi["mgi_scores"]
 
-# --- Gingivitis (from MGI model) ---
-mgi_scores = {
-    "maxilla": {
-        "overall":  1,            # MGI score for upper jaw (0-4)
-        "anterior": "mild",       # front teeth region
-        "premolar": "healthy",    # premolar region
-        "molar":    "healthy",    # molar region
-    },
-    "mandible": {
-        "overall":  0,            # MGI score for lower jaw (0-4)
-        "anterior": "healthy",
-        "premolar": "healthy",
-        "molar":    "healthy",
-    },
-}
-ohi_provided = "Yes"              # were oral hygiene instructions given?
+with open("/mnt/2tb-samsung/zychin/HCJC2026/create_json_files/outputs/caries_output.json") as f:
+    caries = json.load(f)
 
-mgi_scores = {                         # from gingivitis model
-    "maxilla":  {"overall": 1, "anterior": "mild", "premolar": "healthy", "molar": "healthy"},
-    "mandible": {"overall": 0, "anterior": "healthy", "premolar": "healthy", "molar": "healthy"},
-}
+priority, patient_age_group, ohi_provided = "YELLOW", "child", "Yes"  # keep as real intake fields
 
-
-# ── Label maps ───────────────────────────────────────────────────────────────
+# ── Label maps: turns the short codenames of the condition into readable human text
 label_map = {
     "TT": "Tooth Torsion",        "DO": "Deep Overjet",
     "TM": "Tooth Misalignment",   "MR": "Mandibular Retrusion",
@@ -84,6 +67,17 @@ elif overall_mgi == 2: gingi_refer = "Routine dental review within 4–6 weeks (
 elif overall_mgi == 3: gingi_refer = "Refer within 2–4 weeks — scaling indicated (MGI 3)"
 else:                  gingi_refer = "URGENT referral within 24–72 hours (MGI 4)"
 
+caries_teeth = caries["teeth"]
+num_caries = len(caries_teeth)
+num_permanent_caries = sum(1 for t in caries_teeth if t["type"] == "permanent")
+num_primary_caries = sum(1 for t in caries_teeth if t["type"] == "primary")
+
+if num_caries == 0:
+    caries_refer = "No referral — no caries detected"
+elif num_permanent_caries > 0:
+    caries_refer = "Refer to General Dentist — caries in permanent tooth/teeth"
+else:
+    caries_refer = "Refer to General Dentist — caries in primary tooth/teeth (routine)"
 # ── Helper: checkbox line ────────────────────────────────────────────────────
 def box(label, detected_labels):
     return "[X]" if label in detected_labels else "[ ]"
@@ -101,7 +95,6 @@ def build_partial_note():
 
     lines.append("--- MALOCCLUSION FINDINGS ---")
     lines.append("Model Used   : OMNI-based Malocclusion Detector")
-    lines.append(f"Image Views  : {', '.join(image_views)}")
     lines.append("")
     lines.append("Detected Conditions:")
 
@@ -169,6 +162,15 @@ def build_partial_note():
     lines.append(f"Oral Hygiene Instructions Provided : {ohi_provided}")
 
     lines.append("")
+    lines.append("--- CARIES FINDINGS ---")
+    lines.append("Model Used : YOLOv8 Caries Detector (presence only, no severity)")
+    lines.append("")
+    lines.append(f"Caries Detected      : {'Yes' if num_caries > 0 else 'No'}")
+    lines.append(f"  Permanent teeth    : {num_permanent_caries}")
+    lines.append(f"  Primary teeth      : {num_primary_caries}")
+    lines.append(f"Caries Referral      : {caries_refer}")
+
+    lines.append("")
     lines.append("--- COMBINED CLINICAL SUMMARY ---")
     lines.append("[GENERATING...]")  # placeholder — SLM fills this next
     lines.append("")
@@ -180,20 +182,21 @@ def build_partial_note():
 
     return "\n".join(lines)
 
-# ── Retrieve KB context for summary generation ───────────────────────────────
+# ── Retrieve KB context for summary generation (decide what parts of ndcs_kb.txt gets shown to phi3 before writing the summary)
 findings_text = ", ".join([label_map[l] for l in detected_labels if l in label_map])
-query = (f"Referral criteria for {findings_text} "
+caries_text = f"{num_caries} carious teeth detected ({num_permanent_caries} permanent, {num_primary_caries} primary)" if num_caries > 0 else "no caries detected"
+query = (f"Referral criteria for {findings_text}, {caries_text} "
          f"with MGI {overall_mgi} {mgi_text_map[overall_mgi]} priority {priority}")
 
-matching_docs = db.similarity_search(query, k=4)
+matching_docs = db.similarity_search(query, k=4) #searches chroma for k chunks of ndcs.txt whose embeddings are closest to the query
 seen = set()
 unique_docs = [d for d in matching_docs
                if d.page_content not in seen and not seen.add(d.page_content)]
-context = "\n".join([d.page_content for d in unique_docs])
+context = "\n".join([d.page_content for d in unique_docs]) #joins that into one page that gets pasted directly to summary_prompt sent to phi3
 
 # ── SLM writes only the summary ───────────────────────────────────────────────
 summary_prompt = f"""
-You are an NDCS dental screening assistant.
+You are an NDCS(National Dental Centre Singapore) dental screening assistant that is following National Dental Centre Singapore guidelines.
 Write ONLY a 2-3 sentence clinical summary for the combined findings below.
 Be plain English. No bullet points. No headers. Stop after 3 sentences.
 
@@ -203,6 +206,7 @@ Findings:
 - Maxilla MGI: {mgi_scores['maxilla']['overall']}, Mandible MGI: {mgi_scores['mandible']['overall']}
 - Malocclusion referral: {mal_refer} — {refer_to} ({mal_urgency})
 - Gingivitis referral: {gingi_refer}
+- Caries: {caries_text} — {caries_refer}
 
 NDCS Guidelines:
 {context}
@@ -214,7 +218,7 @@ print("Generating clinical summary...")
 response = ollama.generate(
     model="phi3",
     prompt=summary_prompt,
-    options={"num_predict": 150}
+    options={"num_predict": 600}
 )
 summary = response["response"].strip()
 
@@ -223,3 +227,7 @@ note = build_partial_note().replace("[GENERATING...]", summary)
 print("\n" + "=" * 60)
 print(note)
 print("=" * 60)
+
+os.makedirs("outputs", exist_ok=True)
+with open("outputs/final_note.txt", "w") as f:
+    f.write(note)
